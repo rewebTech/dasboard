@@ -1,60 +1,24 @@
 /**
  * dashboardService.js
  * ─────────────────────────────────────────────────────────
- * All dashboard-related API calls in one place.
- * Uses axiosInstance + ENDPOINTS + buildUrl for clean calls.
+ * Dashboard data fetching — uses business + reviews APIs.
+ * No dedicated dashboard endpoint in the backend.
  * ─────────────────────────────────────────────────────────
  */
 
-import axiosInstance from '@/api/axiosInstance';
-import { ENDPOINTS } from '@/api/endpoints';
-import { buildUrl } from '@/api/urlBuilder';
-import { getDemoDashboardData } from '@/lib/demoData';
+import { getBusinessById } from './businessService';
+import { getReviewsByBusiness } from './reviewsService';
 
-async function withDemoFallback(requestFn, fallbackValue) {
-  try {
-    const data = await requestFn();
-    return data ?? fallbackValue;
-  } catch {
-    return fallbackValue;
-  }
-}
+export async function getDashboardData(businessId) {
+  if (!businessId) return { business: null, reviews: [] };
 
-/**
- * Fetch all dashboard stats (views, bookings, revenue, rating).
- * Used on the main dashboard page.
- *
- * @returns {Promise<object>} Stats object
- */
-export async function getDashboardStats() {
-  return withDemoFallback(
-    () => axiosInstance.get(ENDPOINTS.DASHBOARD.STATS),
-    getDemoDashboardData().stats
-  );
-}
+  const [business, reviewsData] = await Promise.all([
+    getBusinessById(businessId).catch(() => null),
+    getReviewsByBusiness(businessId, { limit: 5, page: 1 }).catch(() => null),
+  ]);
 
-/**
- * Fetch recent activity feed.
- *
- * @param {{ limit?: number }} [params]
- * @returns {Promise<Array>} Activity items
- */
-export async function getDashboardActivity(params = {}) {
-  const url = buildUrl(ENDPOINTS.DASHBOARD.ACTIVITY, params);
-  return withDemoFallback(
-    () => axiosInstance.get(url),
-    getDemoDashboardData().activity
-  );
-}
-
-/**
- * Fetch performance metrics (profile completion, response rate).
- *
- * @returns {Promise<object>}
- */
-export async function getDashboardPerformance() {
-  return withDemoFallback(
-    () => axiosInstance.get(ENDPOINTS.DASHBOARD.PERFORMANCE),
-    getDemoDashboardData().performance
-  );
+  return {
+    business,
+    reviews: reviewsData?.reviews || [],
+  };
 }

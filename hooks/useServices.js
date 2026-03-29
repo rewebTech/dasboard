@@ -1,10 +1,18 @@
+/**
+ * useServices.js
+ * ─────────────────────────────────────────────────────────
+ * Hook for services — fetched from business detail.
+ * No separate CRUD API exists for services.
+ * ─────────────────────────────────────────────────────────
+ */
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { getServices, createService, deleteService } from '@/services/servicesService';
+import { getServices, createService } from '@/services/servicesService';
 
 export function useServices() {
-  const [data,    setData]    = useState(null);
+  const [data,    setData]    = useState([]);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState(null);
 
@@ -12,8 +20,8 @@ export function useServices() {
     setLoading(true);
     setError(null);
     try {
-      const res = await getServices();
-      setData(res);
+      const services = await getServices();
+      setData(services);
     } catch (err) {
       setError(err.message || 'Failed to load services');
     } finally {
@@ -21,27 +29,17 @@ export function useServices() {
     }
   }, []);
 
+  const create = useCallback(async (payload) => {
+    try {
+      const newService = await createService(payload);
+      setData(prev => [...prev, newService]);
+      return newService;
+    } catch (err) {
+      throw new Error(err.message || 'Failed to create service');
+    }
+  }, []);
+
   useEffect(() => { fetchServices(); }, [fetchServices]);
 
-  const addService = useCallback(async (serviceData) => {
-    try {
-      await createService(serviceData);
-      await fetchServices(); // refresh list
-      return { success: true };
-    } catch (err) {
-      return { success: false, error: err.message };
-    }
-  }, [fetchServices]);
-
-  const removeService = useCallback(async (id) => {
-    try {
-      await deleteService(id);
-      await fetchServices();
-      return { success: true };
-    } catch (err) {
-      return { success: false, error: err.message };
-    }
-  }, [fetchServices]);
-
-  return { data, loading, error, refresh: fetchServices, addService, removeService };
+  return { data, loading, error, refresh: fetchServices, create };
 }

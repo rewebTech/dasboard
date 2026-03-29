@@ -1,65 +1,49 @@
 /**
  * authService.js
  * ─────────────────────────────────────────────────────────
- * Handles all authentication-related API calls.
- * Uses axiosInstance (token auto-attached via interceptor).
- * Components never call this directly — use useAuth() hook.
+ * Handles business login and profile APIs.
  * ─────────────────────────────────────────────────────────
  */
 
 import axiosInstance from '@/api/axiosInstance';
 import { ENDPOINTS } from '@/api/endpoints';
-import { setToken, removeToken } from '@/lib/helpers';
+import { setToken, removeToken, setUserSession, clearUserSession } from '@/lib/helpers';
 
 /**
- * Login user with email and password.
- * Saves token to localStorage on success.
- *
- * @param {{ email: string, password: string }} credentials
- * @returns {Promise<{ user: object, token: string }>}
+ * Business login — returns user, dashboard, subscription, token.
  */
-export async function loginUser(credentials) {
-  const response = await axiosInstance.post(ENDPOINTS.AUTH.LOGIN, credentials);
-  if (response.token) {
-    setToken(response.token);
+export async function loginBusiness(credentials) {
+  const response = await axiosInstance.post(ENDPOINTS.AUTH.LOGIN_BUSINESS, credentials);
+  const { token, user, dashboard, subscription } = response.data;
+  if (token) {
+    setToken(token);
+    setUserSession({ user, dashboard, subscription });
   }
-  return response;
+  return response.data;
 }
 
 /**
- * Logout the current user.
- * Removes token from localStorage and calls backend.
- *
- * @returns {Promise<void>}
+ * Logout — just clear local state (no backend logout endpoint).
  */
-export async function logoutUser() {
-  try {
-    await axiosInstance.post(ENDPOINTS.AUTH.LOGOUT);
-  } finally {
-    removeToken(); // Always clear token, even if API call fails
-  }
+export function logoutUser() {
+  removeToken();
+  clearUserSession();
 }
 
 /**
- * Get the currently authenticated user's profile.
- * Used for session hydration on app load.
- *
- * @returns {Promise<object>} User object
+ * Update user profile (name, phone, email).
  */
-export async function getCurrentUser() {
-  return axiosInstance.get(ENDPOINTS.AUTH.ME);
+export async function updateProfile(data) {
+  const response = await axiosInstance.patch(ENDPOINTS.AUTH.PROFILE_UPDATE, data);
+  return response.data;
 }
 
 /**
- * Refresh the auth token.
- * Call this before token expiry to keep the session alive.
- *
- * @returns {Promise<{ token: string }>}
+ * Upload avatar with optional profile fields.
  */
-export async function refreshToken() {
-  const response = await axiosInstance.post(ENDPOINTS.AUTH.REFRESH);
-  if (response.token) {
-    setToken(response.token);
-  }
-  return response;
+export async function uploadAvatar(formData) {
+  const response = await axiosInstance.post(ENDPOINTS.AUTH.PROFILE_UPLOAD, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
 }

@@ -1,116 +1,181 @@
+/**
+ * app/subscription/page.jsx
+ * ─────────────────────────────────────────────────────────
+ * Subscription detail page — shows current plan from API.
+ * ─────────────────────────────────────────────────────────
+ */
+
 'use client';
 
-import { useSubscription } from '@/hooks/useSubscription';
-import { useToast } from '@/components/ui/Toast';
+import { useState, useEffect } from 'react';
 import Card, { CardBody } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { CardSkeleton } from '@/components/ui/Skeleton';
+import { formatDate, formatCurrency } from '@/lib/helpers';
+import { getSubscriptionDetail } from '@/services/subscriptionService';
 import DashboardLayout from '@/components/shared/DashboardLayout';
 
-const PLAN_ICONS = {
-  starter:      <BoltIcon />,
-  professional: <CardIcon />,
-  enterprise:   <CrownIcon />,
+const PLAN_DISPLAY = {
+  '1_month':   { name: '1 Month',   price: 1999 },
+  '3_months':  { name: '3 Months',  price: 2999 },
+  '6_months':  { name: '6 Months',  price: 4999 },
+  '12_months': { name: '12 Months', price: 7999 },
 };
 
 export default function SubscriptionPage() {
-  const { subscription, plans, loading, error, upgrade, openBillingPortal } = useSubscription();
-  const { toast } = useToast();
+  const [sub, setSub]         = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(null);
 
-  const handleUpgrade = async (planId) => {
-    const res = await upgrade(planId);
-    res.success ? toast.success('Plan upgraded successfully!') : toast.error(res.error || 'Upgrade failed');
-  };
-
-  const handleBilling = async () => {
-    const res = await openBillingPortal();
-    if (!res.success) toast.error(res.error || 'Could not open billing portal');
-  };
+  useEffect(() => {
+    async function fetch() {
+      setLoading(true);
+      try {
+        const data = await getSubscriptionDetail();
+        setSub(data);
+      } catch (err) {
+        setError(err.message || 'Failed to load subscription');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetch();
+  }, []);
 
   return (
     <DashboardLayout>
       <div className="animate-fade-in">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-white mb-1">Subscription</h1>
-          <p className="text-sm text-dark-400">Manage your plan and billing.</p>
+          <p className="text-sm text-dark-400">View your subscription details.</p>
         </div>
 
         {loading ? (
           <div className="space-y-4">
-            <CardSkeleton lines={3} />
-            <div className="grid grid-cols-3 gap-4">
-              {Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} lines={7} />)}
+            <CardSkeleton lines={5} />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              {Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} lines={4} />)}
             </div>
           </div>
-        ) : (
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center h-64 gap-4">
+            <p className="text-dark-400 text-sm">{error}</p>
+            <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Retry</Button>
+          </div>
+        ) : sub ? (
           <>
-            {/* Current plan bar */}
-            {subscription && (
-              <div className="bg-surface border border-dark-800 rounded p-5 flex items-center justify-between mb-5">
-                <div>
-                  <p className="text-2xs font-semibold uppercase tracking-widest text-dark-500 mb-1">Current Plan</p>
-                  <p className="text-lg font-bold text-white">{subscription.name}</p>
-                  <p className="text-xs text-dark-400 mt-0.5">Renews on {subscription.renewsOn} · {subscription.price}</p>
+            {/* Current Subscription */}
+            <Card className="mb-5">
+              <CardBody className="p-4 md:p-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 md:mb-6">
+                  <div>
+                    <p className="text-2xs font-semibold uppercase tracking-widest text-dark-500 mb-1">Current Plan</p>
+                    <p className="text-xl sm:text-2xl font-bold text-white">
+                      {PLAN_DISPLAY[sub.plan]?.name || sub.plan}
+                    </p>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
+                    sub.status === 'active'
+                      ? 'bg-status-success-muted text-status-success'
+                      : sub.status === 'expired'
+                      ? 'bg-status-error-muted text-status-error'
+                      : 'bg-accent-muted text-accent'
+                  }`}>
+                    {sub.status?.charAt(0).toUpperCase() + sub.status?.slice(1)}
+                  </span>
                 </div>
-                <Button variant="outline" onClick={handleBilling}>Manage Billing</Button>
-              </div>
-            )}
 
-            {/* Plans grid */}
-            <div className="grid grid-cols-3 gap-4">
-              {plans.map((plan) => (
-                <div
-                  key={plan.id}
-                  className={`rounded border p-6 transition-colors ${
-                    plan.featured
-                      ? 'border-accent bg-accent-muted'
-                      : 'border-dark-800 bg-surface'
-                  }`}
-                >
-                  {/* Plan header */}
-                  <div className="flex items-center gap-2.5 mb-4">
-                    <div className="w-7 h-7 text-accent">{PLAN_ICONS[plan.id] || <BoltIcon />}</div>
-                    <span className="text-md font-bold text-white">{plan.name}</span>
-                  </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                  <DetailItem label="Amount Paid" value={formatCurrency(sub.amount)} />
+                  <DetailItem label="Start Date" value={formatDate(sub.start_date)} />
+                  <DetailItem label="End Date" value={formatDate(sub.end_date)} />
+                  <DetailItem
+                    label="Days Remaining"
+                    value={sub.days_remaining ?? '—'}
+                    highlight={sub.days_remaining <= 7}
+                  />
+                </div>
+              </CardBody>
+            </Card>
 
-                  {/* Price */}
-                  <div className="mb-5">
-                    <span className="text-3xl font-extrabold text-white">{plan.price}</span>
-                    <span className="text-sm text-dark-400">{plan.period}</span>
-                  </div>
+            {/* Payment Info */}
+            <Card className="mb-5">
+              <CardBody className="p-4 md:p-6">
+                <p className="text-sm font-semibold text-white mb-3 md:mb-4">Payment Details</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+                  <DetailItem label="Payment Status" value={sub.payment_status?.charAt(0).toUpperCase() + sub.payment_status?.slice(1)} />
+                  <DetailItem label="Payment Method" value={sub.payment_method || '—'} />
+                  <DetailItem label="Order ID" value={sub.razorpay_order_id || '—'} mono />
+                </div>
+              </CardBody>
+            </Card>
 
-                  {/* Features */}
-                  <ul className="space-y-2.5 mb-6">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex items-center gap-2 text-sm text-dark-300">
-                        <span className="text-status-success font-bold">✓</span>
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* CTA */}
-                  <button
-                    onClick={() => !plan.isCurrent && handleUpgrade(plan.id)}
-                    disabled={plan.isCurrent}
-                    className={`w-full py-2.5 rounded text-sm font-semibold transition-all ${
-                      plan.isCurrent
-                        ? 'bg-accent text-black cursor-default'
-                        : 'border border-dark-700 text-white hover:bg-dark-800 hover:border-dark-500'
+            {/* Available Plans */}
+            <p className="text-sm font-semibold text-white mb-3">All Plans</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+              {Object.entries(PLAN_DISPLAY).map(([key, plan]) => {
+                const isCurrent = sub.plan === key;
+                return (
+                  <div
+                    key={key}
+                    className={`relative rounded transition-all duration-200 ${
+                      isCurrent
+                        ? 'border-4 border-yellow-400 bg-yellow-400/10 shadow-lg shadow-yellow-400/20'
+                        : 'border border-dark-800 bg-surface hover:border-dark-600'
                     }`}
                   >
-                    {plan.isCurrent ? 'Current Plan' : 'Upgrade'}
-                  </button>
-                </div>
-              ))}
+                    {isCurrent && (
+                      <div className="absolute -top-3 -right-2 bg-yellow-400 text-black px-2 py-1 rounded-full text-xs font-bold">
+                        Current
+                      </div>
+                    )}
+                    
+                    <div className="p-4 md:p-5">
+                      <p className="text-sm md:text-md font-bold text-white mb-1">{plan.name}</p>
+                      <p className="text-xl md:text-2xl font-extrabold text-white mb-1">{formatCurrency(plan.price)}</p>
+                      <p className="text-xs text-dark-400 mb-3 md:mb-4">one-time payment</p>
+                      
+                      {isCurrent && (
+                        <div className="mb-2 md:mb-3 text-xs text-yellow-400 font-semibold">
+                          ✓ Active until {formatDate(sub.end_date)}
+                        </div>
+                      )}
+                      
+                      <div className={`w-full py-2 px-3 rounded text-center text-xs md:text-sm font-semibold transition-colors ${
+                        isCurrent
+                          ? 'bg-yellow-400 text-black hover:bg-yellow-500'
+                          : 'border border-dark-700 text-dark-300 hover:border-accent hover:text-white'
+                      }`}>
+                        {isCurrent ? 'Current Plan' : 'Available'}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-64 gap-4">
+            <p className="text-dark-400 text-sm">No subscription found.</p>
+            <a href="/signup">
+              <Button>Subscribe Now</Button>
+            </a>
+          </div>
         )}
       </div>
     </DashboardLayout>
   );
 }
 
-function BoltIcon()  { return <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>; }
-function CardIcon()  { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>; }
-function CrownIcon() { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5"><path d="M12 2l3 7h7l-6 4 2 7-6-4-6 4 2-7-6-4h7z"/></svg>; }
+function DetailItem({ label, value, highlight = false, mono = false }) {
+  return (
+    <div>
+      <p className="text-2xs font-semibold uppercase tracking-widest text-dark-500 mb-1">{label}</p>
+      <p className={`text-sm font-semibold ${
+        highlight ? 'text-status-error' : 'text-white'
+      } ${mono ? 'font-mono text-xs' : ''}`}>
+        {value}
+      </p>
+    </div>
+  );
+}

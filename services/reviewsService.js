@@ -1,12 +1,19 @@
+/**
+ * reviewsService.js
+ * ─────────────────────────────────────────────────────────
+ * Reviews API — fetches reviews by business ID.
+ * ─────────────────────────────────────────────────────────
+ */
+
 import axiosInstance from '@/api/axiosInstance';
 import { ENDPOINTS } from '@/api/endpoints';
-import { buildUrl, mergeParams, paginationParams } from '@/api/urlBuilder';
 
-export async function getReviews(params = {}) {
-  const url = buildUrl(ENDPOINTS.REVIEWS.LIST, mergeParams(paginationParams(1, 10), params));
-  return axiosInstance.get(url);
-}
-
-export async function getReviewsSummary() {
-  return axiosInstance.get(ENDPOINTS.REVIEWS.SUMMARY);
+/**
+ * Get reviews for a business with pagination.
+ */
+export async function getReviewsByBusiness(businessId, params = {}) {
+  const query = new URLSearchParams(params).toString();
+  const url = ENDPOINTS.REVIEWS.BY_BUSINESS(businessId) + (query ? `?${query}` : '');
+  const response = await axiosInstance.get(url);
+  return response.data;
 }

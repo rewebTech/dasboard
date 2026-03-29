@@ -1,31 +1,37 @@
 /**
  * servicesService.js
  * ─────────────────────────────────────────────────────────
- * Business services CRUD API calls.
+ * Services CRUD operations.
+ * Fetches services and creates new services.
  * ─────────────────────────────────────────────────────────
  */
 
-import axiosInstance from '@/api/axiosInstance';
 import { ENDPOINTS } from '@/api/endpoints';
-import { buildUrl, mergeParams, paginationParams } from '@/api/urlBuilder';
+import { getUserSession } from '@/lib/helpers';
+import axiosInstance from '@/api/axiosInstance';
 
-export async function getServices(params = {}) {
-  const url = buildUrl(ENDPOINTS.SERVICES.LIST, mergeParams(paginationParams(), params));
-  return axiosInstance.get(url);
+export async function getServices(params={}) {
+  const session = getUserSession();
+  const businessId = session.dashboard?.business_id;
+  if (!businessId) return [];
+
+  const query = new URLSearchParams(params).toString();
+  const url =
+    ENDPOINTS.SERVICES.LIST(businessId) + (query ? `?${query}` : "");
+  const response = await axiosInstance.get(url);
+  return response.data;
 }
 
-export async function getServiceById(id) {
-  return axiosInstance.get(ENDPOINTS.SERVICES.DETAIL(id));
-}
+export async function createService(payload) {
+  const session = getUserSession();
+  const businessId = session.dashboard?.business_id;
+  if (!businessId) throw new Error('Business ID not found');
 
-export async function createService(data) {
-  return axiosInstance.post(ENDPOINTS.SERVICES.LIST, data);
-}
+  const requestBody = {
+    business_id: businessId,
+    ...payload
+  };
 
-export async function updateService(id, data) {
-  return axiosInstance.put(ENDPOINTS.SERVICES.DETAIL(id), data);
-}
-
-export async function deleteService(id) {
-  return axiosInstance.delete(ENDPOINTS.SERVICES.DETAIL(id));
+  const response = await axiosInstance.post(ENDPOINTS.SERVICES.CREATE, requestBody);
+  return response.data;
 }

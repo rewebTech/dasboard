@@ -1,8 +1,7 @@
 /**
  * app/(auth)/login/page.jsx
  * ─────────────────────────────────────────────────────────
- * Login page — CSR form that calls useAuth().login()
- * No direct API calls — everything through the hook.
+ * Business login page — calls useAuth().login()
  * ─────────────────────────────────────────────────────────
  */
 
@@ -35,12 +34,12 @@ export default function LoginPage() {
               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
             </svg>
           </div>
-          <span className="text-xl font-bold text-white">LocalBiz</span>
+          <span className="text-xl font-bold text-white">Sunday Hundred</span>
         </div>
 
         {/* Card */}
         <div className="bg-surface border border-dark-800 rounded-lg p-7">
-          <h1 className="text-xl font-bold text-white mb-1.5">Sign in</h1>
+          <h1 className="text-xl font-bold text-white mb-1.5">Business Sign In</h1>
           <p className="text-sm text-dark-400 mb-6">Enter your credentials to access your dashboard.</p>
 
           {error && (
@@ -67,12 +66,13 @@ export default function LoginPage() {
               required
             />
             <Button type="submit" loading={loading} className="w-full justify-center mt-2">
-              Sign in
+              Sign In
             </Button>
           </form>
 
           <p className="text-xs text-dark-500 text-center mt-5">
-            Demo: use any email + password to test the UI
+            Don&apos;t have an account?{' '}
+            <a href="/signup" className="text-accent hover:underline">Register your business</a>
           </p>
         </div>
       </div>

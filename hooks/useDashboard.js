@@ -1,41 +1,41 @@
 /**
  * useDashboard.js
  * ─────────────────────────────────────────────────────────
- * Custom hook for dashboard data.
- * Handles loading, error, and refresh states.
+ * Hook for dashboard data — combines session data with
+ * business details and recent reviews from API.
  * ─────────────────────────────────────────────────────────
  */
 
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import {
-  getDashboardStats,
-  getDashboardActivity,
-  getDashboardPerformance,
-} from '@/services/dashboardService';
+import { getUserSession } from '@/lib/helpers';
+import { getBusinessById } from '@/services/businessService';
+import { getReviewsByBusiness } from '@/services/reviewsService';
 
-export function useDashboard(initialData = null) {
-  const hasInitialData = !!initialData;
-
-  const [stats,       setStats]       = useState(initialData?.stats || null);
-  const [activity,    setActivity]    = useState(initialData?.activity || []);
-  const [performance, setPerformance] = useState(initialData?.performance || null);
-  const [loading,     setLoading]     = useState(!hasInitialData);
-  const [error,       setError]       = useState(null);
+export function useDashboard() {
+  const [session,  setSession]  = useState(null);
+  const [business, setBusiness] = useState(null);
+  const [reviews,  setReviews]  = useState([]);
+  const [loading,  setLoading]  = useState(true);
+  const [error,    setError]    = useState(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [statsData, activityData, perfData] = await Promise.all([
-        getDashboardStats(),
-        getDashboardActivity({ limit: 10 }),
-        getDashboardPerformance(),
-      ]);
-      setStats(statsData);
-      setActivity(activityData?.items || activityData || []);
-      setPerformance(perfData);
+      const sess = getUserSession();
+      setSession(sess);
+
+      const businessId = sess.dashboard?.business_id;
+      if (businessId) {
+        const [bizData, reviewData] = await Promise.all([
+          getBusinessById(businessId).catch(() => null),
+          getReviewsByBusiness(businessId, { limit: 5, page: 1 }).catch(() => null),
+        ]);
+        if (bizData) setBusiness(bizData);
+        if (reviewData?.reviews) setReviews(reviewData.reviews);
+      }
     } catch (err) {
       setError(err.message || 'Failed to load dashboard');
     } finally {
@@ -43,11 +43,7 @@ export function useDashboard(initialData = null) {
     }
   }, []);
 
-  useEffect(() => {
-    if (!hasInitialData) {
-      fetchAll();
-    }
-  }, [fetchAll, hasInitialData]);
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  return { stats, activity, performance, loading, error, refresh: fetchAll };
+  return { session, business, reviews, loading, error, refresh: fetchAll };
 }

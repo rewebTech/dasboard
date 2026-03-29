@@ -1,22 +1,15 @@
 /**
  * axiosInstance.js
  * ─────────────────────────────────────────────────────────
- * Centralized Axios instance.
- * ALL API calls in the app go through this instance.
- *
- * Features:
- *   - baseURL from env
- *   - Request interceptor: attaches Authorization token
- *   - Response interceptor: normalizes errors, handles 401
- *   - Timeout configuration
+ * Centralized Axios instance for all API calls.
+ * Base URL: http://localhost:5000/api/v1
  * ─────────────────────────────────────────────────────────
  */
 
 import axios from 'axios';
 import { BASE_URL } from './endpoints';
-import { getToken, removeToken } from '@/lib/helpers';
+import { getToken, removeToken, clearUserSession } from '@/lib/helpers';
 
-// ── Create instance ──────────────────────────────────────
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
   timeout: 15000,
@@ -27,52 +20,52 @@ const axiosInstance = axios.create({
 });
 
 // ── Request Interceptor ──────────────────────────────────
-// Attaches the Bearer token to every outgoing request.
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = getToken();
+    console.log('[API Request] URL:', config.url); // Debug URL
+    console.log('[API Request] Token available:', !!token); // Debug token existence
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('[API Request] Authorization header added'); // Confirm header added
+    } else {
+      console.warn('[API Request] No token found - request will be unauthenticated');
     }
+    
+    console.log('[API Request] Headers:', config.headers); // Debug all headers
     return config;
   },
-  (error) => {
-    // Request config error (rare) — reject immediately
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // ── Response Interceptor ─────────────────────────────────
-// Normalize successful responses and handle common errors.
 axiosInstance.interceptors.response.use(
   (response) => {
-    // Unwrap data so callers get response.data directly
+    // Return the API response body ({ success, message, data })
     return response.data;
   },
   (error) => {
     const status  = error.response?.status;
     const message = error.response?.data?.message || error.message || 'Something went wrong';
 
-    // ── 401: Token expired / unauthorized ──
+    // 401: Clear all auth state and redirect
     if (status === 401) {
       removeToken();
-      // Only redirect on client side
+      clearUserSession();
       if (typeof window !== 'undefined') {
         window.location.href = '/login';
       }
     }
 
-    // ── 403: Forbidden ──
     if (status === 403) {
-      console.warn('[API] Access forbidden:', error.config?.url);
+      console.warn('[API] Access forbidden:', error.config?.url, message);
     }
 
-    // ── 500: Server error ──
     if (status >= 500) {
       console.error('[API] Server error:', error.config?.url, message);
     }
 
-    // Normalize the error shape for consistent handling in services
     return Promise.reject({
       status:  status || 0,
       message,

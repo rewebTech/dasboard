@@ -9,8 +9,8 @@ import './globals.css';
 import { ToastProvider } from '@/components/ui/Toast';
 
 export const metadata = {
-  title:       'LocalBiz — Business Dashboard',
-  description: 'Manage your local business — bookings, services, offers, reviews and more.',
+  title:       'Sunday Hundred — Business Dashboard',
+  description: 'Manage your business — services, reviews, subscriptions and more.',
 };
 
 export default function RootLayout({ children }) {

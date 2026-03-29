@@ -2,9 +2,7 @@
  * useAuth.js
  * ─────────────────────────────────────────────────────────
  * Custom hook for authentication state and actions.
- * Components use this — NEVER call authService directly.
- *
- * Provides: { user, loading, error, login, logout, isAuthenticated }
+ * Stores user + dashboard + subscription from business login.
  * ─────────────────────────────────────────────────────────
  */
 
@@ -12,33 +10,30 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginUser, logoutUser, getCurrentUser } from '@/services/authService';
-import { isAuthenticated, removeToken } from '@/lib/helpers';
+import { loginBusiness, logoutUser } from '@/services/authService';
+import { isAuthenticated, removeToken, getUserSession, getInitials } from '@/lib/helpers';
 
 export function useAuth() {
   const router = useRouter();
-  const [user,    setUser]    = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState(null);
+  const [user,         setUser]         = useState(null);
+  const [dashboard,    setDashboard]    = useState(null);
+  const [subscription, setSubscription] = useState(null);
+  const [loading,      setLoading]      = useState(true);
+  const [error,        setError]        = useState(null);
 
-  // ── Hydrate user on mount ──────────────────────────────
+  // ── Hydrate from localStorage on mount ────────────────
   useEffect(() => {
-    async function hydrate() {
-      if (!isAuthenticated()) {
-        setLoading(false);
-        return;
-      }
-      try {
-        const userData = await getCurrentUser();
-        setUser(userData);
-      } catch {
-        removeToken(); // Token invalid — clear it
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
+    if (!isAuthenticated()) {
+      setLoading(false);
+      return;
     }
-    hydrate();
+    const session = getUserSession();
+    if (session.user) {
+      setUser(session.user);
+      setDashboard(session.dashboard);
+      setSubscription(session.subscription);
+    }
+    setLoading(false);
   }, []);
 
   // ── Login ──────────────────────────────────────────────
@@ -46,8 +41,10 @@ export function useAuth() {
     setLoading(true);
     setError(null);
     try {
-      const data = await loginUser(credentials);
+      const data = await loginBusiness(credentials);
       setUser(data.user);
+      setDashboard(data.dashboard);
+      setSubscription(data.subscription);
       router.push('/dashboard');
       return { success: true };
     } catch (err) {
@@ -60,19 +57,24 @@ export function useAuth() {
   }, [router]);
 
   // ── Logout ─────────────────────────────────────────────
-  const logout = useCallback(async () => {
-    setLoading(true);
-    try {
-      await logoutUser();
-    } finally {
-      setUser(null);
-      setLoading(false);
-      router.push('/login');
-    }
+  const logout = useCallback(() => {
+    logoutUser();
+    setUser(null);
+    setDashboard(null);
+    setSubscription(null);
+    router.push('/login');
   }, [router]);
 
+  // Build user object with initials for UI
+  const userWithInitials = user ? {
+    ...user,
+    initials: getInitials(user.name),
+  } : null;
+
   return {
-    user,
+    user: userWithInitials,
+    dashboard,
+    subscription,
     loading,
     error,
     login,

@@ -1,2 +1,2 @@
-export const metadata = { title: 'Sign In — LocalBiz' };
+export const metadata = { title: 'Sign In — Sunday Hundred' };
 export default function LoginLayout({ children }) { return children; }

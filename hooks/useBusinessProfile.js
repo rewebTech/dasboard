@@ -1,7 +1,16 @@
+/**
+ * useBusinessProfile.js
+ * ─────────────────────────────────────────────────────────
+ * Hook for business profile CRUD.
+ * Gets business_id from session, fetches/updates via API.
+ * ─────────────────────────────────────────────────────────
+ */
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { getBusinessProfile, updateBusinessProfile } from '@/services/businessService';
+import { getUserSession } from '@/lib/helpers';
+import { getBusinessById, createBusiness, updateBusiness } from '@/services/businessService';
 
 export function useBusinessProfile() {
   const [profile, setProfile] = useState(null);
@@ -13,8 +22,12 @@ export function useBusinessProfile() {
     setLoading(true);
     setError(null);
     try {
-      const res = await getBusinessProfile();
-      setProfile(res);
+      const session = getUserSession();
+      const businessId = session.dashboard?.business_id;
+      if (businessId) {
+        const data = await getBusinessById(businessId);
+        setProfile(data);
+      }
     } catch (err) {
       setError(err.message || 'Failed to load profile');
     } finally {
@@ -24,11 +37,13 @@ export function useBusinessProfile() {
 
   useEffect(() => { fetchProfile(); }, [fetchProfile]);
 
-  const updateProfile = useCallback(async (data) => {
+  const saveProfile = useCallback(async (formData, isNew = false) => {
     setSaving(true);
     try {
-      const res = await updateBusinessProfile(data);
-      setProfile(res);
+      const result = isNew
+        ? await createBusiness(formData)
+        : await updateBusiness(formData);
+      setProfile(result);
       return { success: true };
     } catch (err) {
       return { success: false, error: err.message };
@@ -37,5 +52,5 @@ export function useBusinessProfile() {
     }
   }, []);
 
-  return { profile, loading, saving, error, updateProfile, refresh: fetchProfile };
+  return { profile, loading, saving, error, saveProfile, refresh: fetchProfile };
 }

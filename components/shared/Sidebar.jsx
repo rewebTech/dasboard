@@ -17,10 +17,10 @@ const NAV_ITEMS = [
     section: 'BUSINESS',
     links: [
       { href: '/dashboard',          label: 'Dashboard',         icon: <GridIcon /> },
-      { href: '/dashboard/analytics', label: 'Analytics',        icon: <ChartIcon /> },
+      // { href: '/dashboard/analytics', label: 'Analytics',        icon: <ChartIcon /> },
       { href: '/business-profile',   label: 'Business Profile',  icon: <UserIcon /> },
       { href: '/services',           label: 'Services',          icon: <CogIcon /> },
-      { href: '/offers',             label: 'Offers',            icon: <TagIcon /> },
+      // { href: '/offers',             label: 'Offers',            icon: <TagIcon /> },
       { href: '/reviews',            label: 'Reviews',           icon: <StarIcon /> },
       { href: '/subscription',       label: 'Subscription',      icon: <CardIcon /> },
     ],
@@ -37,7 +37,7 @@ export default function Sidebar({ user }) {
         <div className="w-8 h-8 bg-accent rounded flex items-center justify-center text-black font-bold text-base flex-shrink-0">
           <BoltIcon />
         </div>
-        <span className="text-lg font-bold text-white">LocalBiz</span>
+        <span className="text-lg font-bold text-white whitespace-nowrap">Sunday Hundred</span>
       </div>
 
       {/* Nav */}
@@ -74,7 +74,7 @@ export default function Sidebar({ user }) {
 
       {/* User */}
       {user && (
-        <div className="px-4 py-3.5 border-t border-dark-800 flex items-center gap-2.5 flex-shrink-0">
+        <div className="px-4 py-3.5 border-t border-dark-800 flex items-center gap-2.5 flex-shrink-0 min-w-0">
           <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-black text-xs font-bold flex-shrink-0">
             {user.initials || 'JD'}
           </div>
