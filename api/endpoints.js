@@ -2,12 +2,16 @@
  * endpoints.js
  * ─────────────────────────────────────────────────────────
  * SINGLE SOURCE OF TRUTH for every API endpoint.
- * Backend: http://localhost:5000/api/v1
+ * Backend: https://api.sundayhundred.com/api/v1
  * ─────────────────────────────────────────────────────────
  */
 
-export const BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api/v1';
+const RAW_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.sundayhundred.com/api/v1';
+
+export const BASE_URL = /^https?:\/\//i.test(RAW_BASE_URL)
+  ? RAW_BASE_URL
+  : `https://${RAW_BASE_URL}`;
 
 export const ENDPOINTS = {
   // ── Auth ──────────────────────────────────────────────
