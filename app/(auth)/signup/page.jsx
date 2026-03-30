@@ -20,15 +20,13 @@ import Input from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 
 const PLANS = [
-  { key: '1_month',   label: '1 Month',   price: '₹1,999',  priceNum: 1999 },
   { key: '3_months',  label: '3 Months',  price: '₹2,999',  priceNum: 2999, popular: true },
   { key: '6_months',  label: '6 Months',  price: '₹4,999',  priceNum: 4999 },
   { key: '12_months', label: '12 Months', price: '₹7,999',  priceNum: 7999 },
 ];
 
 const RAZORPAY_ENABLED = process.env.NEXT_PUBLIC_RAZORPAY_ENABLED === 'true';
-const FALLBACK_UPI_LINK = 'upi://pay?pa=ag244834-1@okaxis&pn=SundayHundred&am=99&cu=INR&tn=Payment%20for%20subscription';
-const FALLBACK_UPI_ID = 'ag244834-1@okaxis';
+const FALLBACK_UPI_ID = process.env.NEXT_PUBLIC_UPI_ID || 'ag244834-1@okaxis';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -82,7 +80,21 @@ export default function SignupPage() {
       });
 
       if (paymentData.payment_mode === 'MANUAL_QR') {
-        setManualInfo(paymentData);
+        const plan = PLANS.find((p) => p.key === form.plan);
+        const manualAmount = paymentData.amount
+          ? Number(paymentData.amount)
+          : paymentData.amount_paise
+          ? Number(paymentData.amount_paise) / 100
+          : plan?.priceNum || 2999;
+
+        setManualInfo({
+          ...paymentData,
+          amount: manualAmount,
+          qr: {
+            upi_id: paymentData?.qr?.upi_id || FALLBACK_UPI_ID,
+            qr_image_url: paymentData?.qr?.qr_image_url || null,
+          },
+        });
         setManualHint('');
         setStep('manual');
         setLoading(false);
@@ -103,7 +115,7 @@ export default function SignupPage() {
             qr_image_url: paymentData?.qr?.qr_image_url || null,
           },
         });
-        setManualHint('Razorpay disabled hai, isliye manual UPI fallback open kiya gaya hai. TXN submit ke baad admin approval pending rahega.');
+        // setManualHint('Razorpay disabled hai, isliye manual UPI fallback open kiya gaya hai. TXN submit ke baad admin approval pending rahega.');
         setStep('manual');
         setLoading(false);
         return;
@@ -250,9 +262,10 @@ export default function SignupPage() {
   }
 
   if (step === 'manual' || step === 'submitting_manual') {
-    const upiLink = manualInfo?.qr?.upi_id
-      ? `upi://pay?pa=${encodeURIComponent(manualInfo.qr.upi_id)}&pn=SundayHundred&am=${encodeURIComponent(String(manualInfo.amount || 99))}&cu=INR&tn=Payment%20for%20subscription`
-      : FALLBACK_UPI_LINK;
+    const selectedPlanAmount = PLANS.find((p) => p.key === form.plan)?.priceNum || 2999;
+    const payAmount = Number(manualInfo?.amount) || selectedPlanAmount;
+    const upiId = manualInfo?.qr?.upi_id || FALLBACK_UPI_ID;
+    const upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=SundayHundred&am=${encodeURIComponent(String(payAmount))}&cu=INR&tn=Payment%20for%20subscription`;
 
     return (
       <div className="min-h-screen bg-dark-950 flex items-center justify-center p-4">
@@ -271,7 +284,7 @@ export default function SignupPage() {
           <div className="rounded border border-dark-700 bg-dark-900 p-4 mb-4 space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-dark-400">Amount</span>
-              <span className="text-white font-semibold">Rs {manualInfo?.amount || 99}</span>
+              <span className="text-white font-semibold">Rs {payAmount}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-dark-400">Reference</span>
