@@ -14,6 +14,7 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import Footer from './Footer';
 import { getUserSession, getInitials } from '@/lib/helpers';
+import { getBusinessById } from '@/services/businessService';
 
 const DEFAULT_USER = {
   name: 'Business Owner',
@@ -26,13 +27,47 @@ export default function DashboardLayout({ children, user: serverUser = DEFAULT_U
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const session = getUserSession();
-    if (session.user) {
+    let isMounted = true;
+
+    const hydrateUser = async () => {
+      const session = getUserSession();
+      if (!session.user || !isMounted) return;
+
+      const sessionQrUrl =
+        session.user?.web_qr_url ||
+        session.user?.webQrUrl ||
+        session.dashboard?.web_qr_url ||
+        session.dashboard?.webQrUrl ||
+        session.dashboard?.business?.web_qr_url ||
+        session.dashboard?.business?.webQrUrl ||
+        '';
+
+      let businessQrUrl = '';
+      const businessId = session.dashboard?.business_id;
+      if (businessId) {
+        const business = await getBusinessById(businessId).catch(() => null);
+        businessQrUrl =
+          business?.web_qr_url ||
+          business?.webQrUrl ||
+          business?.qr?.web_qr_url ||
+          business?.qr?.webQrUrl ||
+          '';
+      }
+
+      if (!isMounted) return;
+
       setUser({
         ...session.user,
+        web_qr_url: sessionQrUrl || businessQrUrl,
         initials: getInitials(session.user.name),
       });
-    }
+    };
+
+    hydrateUser();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Close sidebar when clicking outside (mobile)

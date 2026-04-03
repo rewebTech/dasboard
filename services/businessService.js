@@ -8,6 +8,15 @@
 import axiosInstance from '@/api/axiosInstance';
 import { ENDPOINTS } from '@/api/endpoints';
 
+const BUSINESS_CACHE_TTL_MS = 30 * 1000;
+const businessCache = new Map();
+const inFlightBusinessRequests = new Map();
+
+function getBusinessCacheKey(id, params = {}) {
+  const query = new URLSearchParams(params).toString();
+  return `${id}::${query}`;
+}
+
 /**
  * Create a new business profile (multipart/form-data).
  */
@@ -32,10 +41,35 @@ export async function updateBusiness(formData) {
  * Get business by ID.
  */
 export async function getBusinessById(id, params = {}) {
+  const cacheKey = getBusinessCacheKey(id, params);
+  const cached = businessCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < BUSINESS_CACHE_TTL_MS) {
+    return cached.data;
+  }
+
+  const pending = inFlightBusinessRequests.get(cacheKey);
+  if (pending) {
+    return pending;
+  }
+
   const query = new URLSearchParams(params).toString();
   const url = ENDPOINTS.BUSINESS.GET_BY_ID(id) + (query ? `?${query}` : '');
-  const response = await axiosInstance.get(url);
-  return response.data;
+
+  const request = axiosInstance
+    .get(url)
+    .then((response) => {
+      businessCache.set(cacheKey, {
+        data: response.data,
+        timestamp: Date.now(),
+      });
+      return response.data;
+    })
+    .finally(() => {
+      inFlightBusinessRequests.delete(cacheKey);
+    });
+
+  inFlightBusinessRequests.set(cacheKey, request);
+  return request;
 }
 
 /**
