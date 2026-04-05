@@ -7,7 +7,7 @@
  */
 
 const RAW_BASE_URL =
- 'https://api.sundayhundred.com/api/v1';
+ 'http://localhost:5000/api/v1';
 
 export const BASE_URL = /^https?:\/\//i.test(RAW_BASE_URL)
   ? RAW_BASE_URL
@@ -24,6 +24,7 @@ export const ENDPOINTS = {
 
   // ── Subscriptions (Razorpay) ──────────────────────────
   SUBSCRIPTION: {
+    REQUEST_OTP: "/subscriptions/register/request-otp",
     REGISTER: "/subscriptions/register",
     VERIFY: "/subscriptions/verify",
     DETAIL: "/subscriptions/detail",

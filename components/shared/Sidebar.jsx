@@ -21,7 +21,7 @@ const BUSINESS_NAV_ITEMS = [
       { href: '/business-profile',   label: 'Business Profile',  icon: <UserIcon /> },
       { href: '/services',           label: 'Services',          icon: <CogIcon /> },
       { href: '/offers',             label: 'Offers',            icon: <TagIcon /> },
-      { href: '/reviews',            label: 'Reviews',           icon: <StarIcon /> },
+      // { href: '/reviews',            label: 'Reviews',           icon: <StarIcon /> },
       { href: '/subscription',       label: 'Subscription',      icon: <CardIcon /> },
     ],
   },

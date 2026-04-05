@@ -40,6 +40,113 @@ UI (page.jsx)  →  Hooks  →  Services  →  axiosInstance  →  Backend API
 - `app/dashboard/page.jsx` (overview)
 - `app/dashboard/analytics/page.jsx` (second dashboard module)
 
+## Subscriptions (Razorpay + Manual QR)
+
+Business signup is now a 2-step email OTP flow before payment and subscription creation.
+
+### 3.0 Business Signup System
+
+#### Step 1 - Request OTP
+
+`POST /api/v1/subscriptions/register/request-otp`
+
+Body:
+```json
+{
+	"name": "Business Owner",
+	"email": "owner@gmail.com",
+	"phone": "9876543210",
+	"password": "password123",
+	"plan": "3_months"
+}
+```
+
+Response `200`:
+```json
+{
+	"success": true,
+	"message": "OTP sent to email",
+	"data": {
+		"email": "owner@gmail.com",
+		"expires_in_minutes": 10
+	}
+}
+```
+
+#### Step 2 - Verify OTP + Register
+
+`POST /api/v1/subscriptions/register`
+
+Body:
+```json
+{
+	"name": "Business Owner",
+	"email": "owner@gmail.com",
+	"phone": "9876543210",
+	"password": "password123",
+	"plan": "3_months",
+	"otp": "123456"
+}
+```
+
+If the OTP is valid, user, dashboard, payment, and subscription records are created.
+
+#### Step 3 - Payment Mode Branch
+
+1. Razorpay mode (`payment_mode = RAZORPAY`):
+- Response includes `order_id`, `amount`, `currency`, and `key_id`.
+- Frontend opens Razorpay checkout.
+
+2. Manual QR mode (`payment_mode = MANUAL_QR`):
+- Response includes `payment_reference`, `qr.upi_id`, and `qr.qr_image_url`.
+- User pays via QR and submits the transaction ID.
+
+#### Step 4A - Razorpay Verify
+
+`POST /api/v1/subscriptions/verify`
+
+Body:
+```json
+{
+	"razorpay_order_id": "order_xxx",
+	"razorpay_payment_id": "pay_xxx",
+	"razorpay_signature": "signature_xxx"
+}
+```
+
+Result: payment captured, subscription active, business login enabled.
+
+#### Step 4B - Manual Submit + Admin Approve
+
+User submit:
+`POST /api/v1/subscriptions/manual/submit`
+
+Admin approve:
+`POST /api/v1/subscriptions/manual/action`
+
+Result after approval: payment captured, subscription active, business login enabled.
+
+#### Step 5 - Business Login
+
+`POST /api/v1/users/login-business`
+
+This returns the business token and unlocks dashboard APIs.
+
+#### Important OTP/Error Cases
+
+- `400` OTP not found. Please request a new OTP.
+- `400` OTP has expired. Please request a new OTP.
+- `400` Invalid OTP
+- `409` Email or phone already registered
+
+### Frontend State Flow
+
+`FORM_SUBMIT` -> `OTP_SENT` -> `OTP_VERIFIED_REGISTERED` -> (`PAYMENT_PENDING` or `ADMIN_APPROVAL_PENDING`) -> `ACTIVE` -> `LOGIN_SUCCESS`
+
+### 3.1 Register + Create Order
+
+Business registration is now OTP-gated, so the signup screen should first request and verify email OTP before creating the payment order.
+
 ## Adding a New Module
 
 1. Add endpoint in `api/endpoints.js`

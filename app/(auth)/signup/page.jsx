@@ -11,6 +11,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
+  requestSignupOtp,
   registerSubscription,
   verifyRazorpayPayment,
   submitManualTransaction,
@@ -20,7 +21,8 @@ import Input from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 
 const PLANS = [
-  { key: '3_months',  label: '3 Months',  price: '₹2,999',  priceNum: 2999, popular: true },
+  { key: '1_month',   label: '1 Month',   price: '₹1',      priceNum: 1,    popular: true },
+  { key: '3_months',  label: '3 Months',  price: '₹2,999',  priceNum: 2999 },
   { key: '6_months',  label: '6 Months',  price: '₹4,999',  priceNum: 4999 },
   { key: '12_months', label: '12 Months', price: '₹7,999',  priceNum: 7999 },
 ];
@@ -37,8 +39,10 @@ export default function SignupPage() {
     email: '',
     phone: '',
     password: '',
-    plan: '3_months',
+    plan: '1_month',
   });
+  const [otp, setOtp] = useState('');
+  const [otpRequested, setOtpRequested] = useState(false);
   const [step, setStep] = useState('form'); // form | paying | verifying | manual | submitting_manual | pending | done
   const [manualInfo, setManualInfo] = useState(null);
   const [manualTxn, setManualTxn] = useState({ txn_id: '', payer_note: '' });
@@ -47,7 +51,43 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
 
-  const update = (key) => (e) => setForm(p => ({ ...p, [key]: e.target.value }));
+  const update = (key) => (e) => {
+    setForm((p) => ({ ...p, [key]: e.target.value }));
+    if (otpRequested) {
+      setOtpRequested(false);
+      setOtp('');
+    }
+  };
+
+  const handleRequestOtp = async () => {
+    setError('');
+
+    if (!form.name.trim() || !form.email.trim() || !form.phone.trim() || !form.password) {
+      setError('Please fill name, email, phone, password, and plan before requesting OTP.');
+      return false;
+    }
+
+    setLoading(true);
+    try {
+      await requestSignupOtp({
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        password: form.password,
+        plan: form.plan,
+      });
+
+      setOtpRequested(true);
+      toast.success('OTP sent to your email.');
+      return true;
+    } catch (err) {
+      setError(err.message || 'Failed to send OTP. Please try again.');
+      setOtpRequested(false);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadRazorpayScript = useCallback(() => {
     return new Promise((resolve) => {
@@ -67,16 +107,28 @@ export default function SignupPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!otpRequested) {
+      await handleRequestOtp();
+      return;
+    }
+
+    if (!otp.trim()) {
+      setError('Please enter the OTP sent to your email.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Step 1: Register and check payment mode
+      // Step 2: Verify OTP and check payment mode
       const paymentData = await registerSubscription({
         name: form.name,
         email: form.email,
         phone: form.phone,
         password: form.password,
         plan: form.plan,
+        otp: otp.trim(),
       });
 
       if (paymentData.payment_mode === 'MANUAL_QR') {
@@ -85,7 +137,7 @@ export default function SignupPage() {
           ? Number(paymentData.amount)
           : paymentData.amount_paise
           ? Number(paymentData.amount_paise) / 100
-          : plan?.priceNum || 2999;
+          : plan?.priceNum || 1;
 
         setManualInfo({
           ...paymentData,
@@ -109,7 +161,7 @@ export default function SignupPage() {
         const plan = PLANS.find((p) => p.key === form.plan);
         setManualInfo({
           payment_reference: paymentData.payment_reference || paymentData.order_id || `manual_fallback_${Date.now()}`,
-          amount: paymentData.amount ? Number(paymentData.amount) / 100 : plan?.priceNum || 99,
+          amount: paymentData.amount ? Number(paymentData.amount) / 100 : plan?.priceNum || 1,
           qr: {
             upi_id: paymentData?.qr?.upi_id || FALLBACK_UPI_ID,
             qr_image_url: paymentData?.qr?.qr_image_url || null,
@@ -262,7 +314,7 @@ export default function SignupPage() {
   }
 
   if (step === 'manual' || step === 'submitting_manual') {
-    const selectedPlanAmount = PLANS.find((p) => p.key === form.plan)?.priceNum || 2999;
+    const selectedPlanAmount = PLANS.find((p) => p.key === form.plan)?.priceNum || 1;
     const payAmount = Number(manualInfo?.amount) || selectedPlanAmount;
     const upiId = manualInfo?.qr?.upi_id || FALLBACK_UPI_ID;
     const upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=SundayHundred&am=${encodeURIComponent(String(payAmount))}&cu=INR&tn=Payment%20for%20subscription`;
@@ -366,6 +418,12 @@ export default function SignupPage() {
             </div>
           )}
 
+          {otpRequested && !error && (
+            <div className="bg-accent-muted border border-accent/30 text-accent text-sm rounded p-3 mb-4">
+              OTP sent to {form.email}. Enter the code to continue.
+            </div>
+          )}
+
           {step === 'verifying' && (
             <div className="flex items-center gap-3 bg-accent-muted border border-accent/30 text-accent text-sm rounded p-3 mb-4">
               <div className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin flex-shrink-0" />
@@ -410,6 +468,20 @@ export default function SignupPage() {
               minLength={6}
             />
 
+            {otpRequested && (
+              <Input
+                label="OTP"
+                type="text"
+                inputMode="numeric"
+                placeholder="Enter 6-digit OTP"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                required
+                minLength={6}
+                maxLength={6}
+              />
+            )}
+
             {/* Plan Selection */}
             <div>
               <label className="block text-sm font-medium text-dark-300 mb-2">Choose Plan</label>
@@ -445,12 +517,25 @@ export default function SignupPage() {
               disabled={step === 'paying' || step === 'verifying'}
               className="w-full justify-center mt-2"
             >
-              {step === 'paying'
+              {!otpRequested
+                ? 'Send OTP'
+                : step === 'paying'
                 ? 'Complete Payment...'
                 : step === 'verifying'
                 ? 'Verifying...'
-                : 'Register & Continue'}
+                : 'Verify OTP & Continue'}
             </Button>
+
+            {otpRequested && (
+              <button
+                type="button"
+                onClick={handleRequestOtp}
+                disabled={loading}
+                className="w-full text-xs text-accent hover:underline disabled:opacity-60"
+              >
+                Resend OTP
+              </button>
+            )}
           </form>
 
           <p className="text-xs text-dark-500 text-center mt-5">

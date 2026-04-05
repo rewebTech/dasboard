@@ -14,7 +14,7 @@ import { getAllCities } from '@/services/citiesService';
 const REQUIRED_PHONE_PATTERN = /^\d{10,15}$/;
 const REQUIRED_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PLAN_OPTIONS = [
-  { label: '1 Month - ₹1999', value: '1_month', amount: '1999' },
+  { label: '1 Month - ₹1', value: '1_month', amount: '1' },
   { label: '3 Months - ₹2999', value: '3_months', amount: '2999' },
   { label: '6 Months - ₹4999', value: '6_months', amount: '4999' },
   { label: '12 Months - ₹7999', value: '12_months', amount: '7999' },
@@ -47,12 +47,12 @@ function createRow() {
       razorpay_order_id: '',
       razorpay_payment_id: '',
       razorpay_signature: '',
-      amount: '1999',
+      amount: '1',
       currency: '',
       method: '',
       description: '',
       plan: '1_month',
-      planLabel: '1 Month - ₹1999',
+      planLabel: '1 Month - ₹1',
     },
   };
 }
@@ -549,7 +549,7 @@ export default function BulkCreatePage() {
               <CardHeader title="API Notes" subtitle="Use this when admin or superadmin needs to import multiple businesses at once." />
               <CardBody className="space-y-3 text-sm text-dark-300">
                 <p>Required per item: user.name, user.email, user.phone, user.password, business.name, business.category_id and business.city_id.</p>
-                <p>Payment is optional. Default plan is 1 month (₹1999). If omitted, backend can auto-generate safe payment data.</p>
+                <p>Payment is optional. Default plan is 1 month (₹1). If omitted, backend can auto-generate safe payment data.</p>
                 <p>Use UUIDs for category and city IDs. Phone must contain 10-15 digits.</p>
                 <div className="rounded border border-dark-800 bg-dark-900 p-3 text-xs text-dark-400">
                   The backend returns a per-item results array, so you should review created and failed rows independently.

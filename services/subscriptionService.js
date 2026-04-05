@@ -12,6 +12,15 @@ import { ENDPOINTS } from '@/api/endpoints';
  * Register business plan.
  * Backend may return payment_mode = RAZORPAY or MANUAL_QR.
  */
+export async function requestSignupOtp(data) {
+  const response = await axiosInstance.post(ENDPOINTS.SUBSCRIPTION.REQUEST_OTP, data);
+  return response.data;
+}
+
+/**
+ * Verify OTP and register business plan.
+ * Backend may return payment_mode = RAZORPAY or MANUAL_QR.
+ */
 export async function registerSubscription(data) {
   const response = await axiosInstance.post(ENDPOINTS.SUBSCRIPTION.REGISTER, data);
   return response.data;
@@ -73,5 +82,6 @@ export async function getSubscriptionDetail() {
 }
 
 // Backward-compatible aliases
+export const requestSubscriptionOtp = requestSignupOtp;
 export const registerAndCreateOrder = registerSubscription;
 export const verifyPayment = verifyRazorpayPayment;

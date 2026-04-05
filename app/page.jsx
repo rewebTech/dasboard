@@ -28,6 +28,7 @@ const FEATURES = [
 ];
 
 const BILLING_OPTIONS = [
+    { duration: '3 Months', price: '₹1999'},
   { duration: '3 Months', price: '₹2999', popular: true },
   { duration: '6 Months', price: '₹4999' },
   { duration: '12 Months', price: '₹7999' },
@@ -108,12 +109,12 @@ export default function RootPage() {
           <Link href="/signup" className="rounded bg-accent px-5 py-2.5 text-sm font-semibold text-black hover:bg-accent-dark transition-colors">
             Get Started
           </Link>
-          <Link href="/signup" className="rounded border border-dark-600 bg-surface px-5 py-2.5 text-sm font-medium hover:bg-surface-2 transition-colors">
+          {/* <Link href="/signup" className="rounded border border-dark-600 bg-surface px-5 py-2.5 text-sm font-medium hover:bg-surface-2 transition-colors">
             List Your Business
           </Link>
           <Link href="/signup" className="rounded border border-dark-600 bg-transparent px-5 py-2.5 text-sm font-medium hover:bg-surface transition-colors">
             View Demo
-          </Link>
+          </Link> */}
         </div>
 
         <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">

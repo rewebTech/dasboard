@@ -15,11 +15,9 @@ import Button from '@/components/ui/Button';
 import { StatCardSkeleton } from '@/components/ui/Skeleton';
 import { formatNumber, getUserSession, formatDate } from '@/lib/helpers';
 import { getBusinessById } from '@/services/businessService';
-import { getReviewsByBusiness } from '@/services/reviewsService';
 
 export default function DashboardClient() {
   const [business, setBusiness]   = useState(null);
-  const [reviews, setReviews]     = useState([]);
   const [session, setSession]     = useState(null);
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState(null);
@@ -33,12 +31,8 @@ export default function DashboardClient() {
 
         const businessId = sess.dashboard?.business_id;
         if (businessId) {
-          const [bizData, reviewData] = await Promise.all([
-            getBusinessById(businessId).catch(() => null),
-            getReviewsByBusiness(businessId, { limit: 5, page: 1 }).catch(() => null),
-          ]);
+          const bizData = await getBusinessById(businessId).catch(() => null);
           if (bizData) setBusiness(bizData);
-          if (reviewData?.reviews) setReviews(reviewData.reviews);
         }
       } catch (err) {
         setError(err.message || 'Failed to load dashboard');
@@ -74,30 +68,15 @@ export default function DashboardClient() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-5">
         {loading ? (
-          Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
+          Array.from({ length: 1 }).map((_, i) => <StatCardSkeleton key={i} />)
         ) : (
           <>
             <StatCard
               label="Business Status"
               value={dashboardData?.is_active ? 'Active' : 'Inactive'}
               icon={<StatusIcon />}
-            />
-            <StatCard
-              label="Approval"
-              value={dashboardData?.is_approved ? 'Approved' : 'Pending'}
-              icon={<CheckIcon />}
-            />
-            <StatCard
-              label="Rating"
-              value={business?.rating || '0.0'}
-              icon={<StarIcon />}
-            />
-            <StatCard
-              label="Total Reviews"
-              value={formatNumber(business?.total_reviews ?? 0)}
-              icon={<ReviewIcon />}
             />
           </>
         )}
@@ -139,32 +118,6 @@ export default function DashboardClient() {
             </CardBody>
           )}
 
-          {/* Recent Reviews */}
-          {reviews.length > 0 && (
-            <>
-              <div className="px-5 pt-4 pb-2">
-                <p className="text-sm font-semibold text-white">Recent Reviews</p>
-              </div>
-              {reviews.slice(0, 3).map((r) => (
-                <div key={r.id} className="flex items-start gap-3 px-5 py-3.5 border-b border-dark-800 last:border-0 hover:bg-dark-800/40 transition-colors">
-                  <div className="w-8 h-8 rounded-full bg-accent-muted flex items-center justify-center text-accent flex-shrink-0 text-xs font-bold">
-                    {r.user_name?.[0]?.toUpperCase() || '?'}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-white">{r.user_name}</p>
-                      <div className="flex gap-0.5">
-                        {Array.from({ length: 5 }).map((_, j) => (
-                          <span key={j} style={{ color: j < r.rating ? '#F5A623' : '#374151', fontSize: 11 }}>★</span>
-                        ))}
-                      </div>
-                    </div>
-                    <p className="text-xs text-dark-400 mt-0.5 truncate">{r.comment}</p>
-                  </div>
-                </div>
-              ))}
-            </>
-          )}
         </Card>
 
         {/* Quick Actions + Subscription */}
@@ -174,7 +127,6 @@ export default function DashboardClient() {
             <CardBody className="p-3 space-y-2">
               {[
                 { label: 'Edit Business', icon: <EditIcon />, href: '/business-profile' },
-                { label: 'View Reviews', icon: <StarIcon />, href: '/reviews' },
                 { label: 'Subscription', icon: <CardIcon />, href: '/subscription' },
               ].map((action) => (
                 <a
@@ -230,8 +182,5 @@ function InfoRow({ label, value }) {
 }
 
 function StatusIcon()  { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><circle cx="12" cy="12" r="10"/><path d="M8 12l2 2 4-4"/></svg>; }
-function CheckIcon()   { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>; }
-function StarIcon()    { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>; }
-function ReviewIcon()  { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>; }
 function EditIcon()    { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>; }
 function CardIcon()    { return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>; }
