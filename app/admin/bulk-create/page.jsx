@@ -111,7 +111,7 @@ function createRow() {
     business: {
       name: '',
       description: '',
-      category_id: '',
+      sub_category_id: '',
       contact: '',
       whatsapp_no: '',
       address: '',
@@ -158,7 +158,7 @@ function normalizeRow(row) {
   const business = cleanObject({
     name: row.business.name.trim(),
     description: row.business.description.trim(),
-    category_id: row.business.category_id.trim(),
+    sub_category_id: row.business.sub_category_id.trim(),
     contact: row.business.contact.trim(),
     whatsapp_no: row.business.whatsapp_no.trim(),
     address: row.business.address.trim(),
@@ -197,8 +197,8 @@ function validateRow(row) {
   if (!row.user.password) errors['user.password'] = 'Password is required';
 
   if (!row.business.name.trim()) errors['business.name'] = 'Business name is required';
-  if (!row.business.category_id.trim()) errors['business.category_id'] = 'Subcategory UUID is required';
-  else if (!REQUIRED_UUID_PATTERN.test(row.business.category_id.trim())) errors['business.category_id'] = 'Subcategory ID must be a UUID';
+  if (!row.business.sub_category_id.trim()) errors['business.sub_category_id'] = 'Subcategory UUID is required';
+  else if (!REQUIRED_UUID_PATTERN.test(row.business.sub_category_id.trim())) errors['business.sub_category_id'] = 'Subcategory ID must be a UUID';
   if (!row.business.city_id.trim()) errors['business.city_id'] = 'City UUID is required';
   else if (!REQUIRED_UUID_PATTERN.test(row.business.city_id.trim())) errors['business.city_id'] = 'City ID must be a UUID';
 
@@ -326,7 +326,7 @@ export default function BulkCreatePage() {
     setSelectedCategoryByRow((prev) => {
       const next = { ...prev };
       rows.forEach((row) => {
-        const resolvedParent = findParentCategoryId(categories, row.business.category_id);
+        const resolvedParent = findParentCategoryId(categories, row.business.sub_category_id);
         if (!next[row.id] && resolvedParent) {
           next[row.id] = resolvedParent;
         }
@@ -416,7 +416,7 @@ export default function BulkCreatePage() {
           <Card>
             <CardHeader
               title="Request Builder"
-              subtitle="Required fields are user.name, user.email, user.phone, user.password, business.name, business.category_id (selected subcategory id) and business.city_id."
+              subtitle="Required fields are user.name, user.email, user.phone, user.password, business.name, business.sub_category_id (selected subcategory id) and business.city_id."
               action={<span className="text-xs text-dark-500">Rows: {rows.length}</span>}
             />
             <CardBody className="space-y-4">
@@ -511,8 +511,8 @@ export default function BulkCreatePage() {
                           <div className="flex flex-col gap-1.5">
                             <label className="text-xs font-medium text-dark-400">Subcategory</label>
                             <select
-                              value={row.business.category_id}
-                              onChange={(e) => setRows((prev) => updateRow(prev, row.id, 'business', 'category_id', e.target.value))}
+                              value={row.business.sub_category_id}
+                              onChange={(e) => setRows((prev) => updateRow(prev, row.id, 'business', 'sub_category_id', e.target.value))}
                               disabled={!selectedParentCategoryId}
                               className="w-full bg-surface-2 border border-dark-700 rounded text-white text-sm px-3 py-2 outline-none focus:border-accent disabled:opacity-60"
                             >
@@ -521,8 +521,8 @@ export default function BulkCreatePage() {
                                 <option key={subcategory.id} value={subcategory.id}>{subcategory.name}</option>
                               ))}
                             </select>
-                            {getFieldError(errors, 'business.category_id') && (
-                              <p className="text-xs text-status-error">{getFieldError(errors, 'business.category_id')}</p>
+                            {getFieldError(errors, 'business.sub_category_id') && (
+                              <p className="text-xs text-status-error">{getFieldError(errors, 'business.sub_category_id')}</p>
                             )}
                           </div>
                           <div className="flex flex-col gap-1.5">
@@ -662,7 +662,7 @@ export default function BulkCreatePage() {
             <Card>
               <CardHeader title="API Notes" subtitle="Use this when admin or superadmin needs to import multiple businesses at once." />
               <CardBody className="space-y-3 text-sm text-dark-300">
-                <p>Required per item: user.name, user.email, user.phone, user.password, business.name, business.category_id (selected subcategory id) and business.city_id.</p>
+                <p>Required per item: user.name, user.email, user.phone, user.password, business.name, business.sub_category_id (selected subcategory id) and business.city_id.</p>
                 <p>Payment is optional. Default plan is 1 month (₹1999). If omitted, backend can auto-generate safe payment data.</p>
                 <p>Use UUIDs for category and city IDs. Phone must contain 10-15 digits.</p>
                 <div className="rounded border border-dark-800 bg-dark-900 p-3 text-xs text-dark-400">

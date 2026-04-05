@@ -95,7 +95,7 @@ export default function BusinessProfilePage() {
   const [imagePreview, setImagePreview] = useState(null);
 
   const [form, setForm] = useState({
-    name: '', description: '', category_id: '', city_id: '',
+    name: '', description: '', sub_category_id: '', city_id: '',
     contact: '', whatsapp_no: '', address: '', lat: '', long: '',
   });
 
@@ -119,7 +119,7 @@ export default function BusinessProfilePage() {
             setForm({
               name:        biz.name || '',
               description: biz.description || '',
-              category_id: biz.category_id || '',
+              sub_category_id: biz.sub_category_id || biz.category_id || '',
               city_id:     biz.city_id || '',
               contact:     biz.contact || '',
               whatsapp_no: biz.whatsapp_no || '',
@@ -144,16 +144,21 @@ export default function BusinessProfilePage() {
     setSelectedCategoryId(parentCategoryId);
   }, [categories, form.category_id]);
 
+  useEffect(() => {
+    const parentCategoryId = findParentCategoryId(categories, form.sub_category_id);
+    setSelectedCategoryId(parentCategoryId);
+  }, [categories, form.sub_category_id]);
+
   const update = (key) => (e) => setForm(p => ({ ...p, [key]: e.target.value }));
 
   const handleCategoryChange = (e) => {
     const parentId = e.target.value;
     setSelectedCategoryId(parentId);
-    setForm((p) => ({ ...p, category_id: '' }));
+    setForm((p) => ({ ...p, sub_category_id: '' }));
   };
 
   const availableSubcategories = categories.find((cat) => cat.id === selectedCategoryId)?.subcategories || [];
-  const selectedSubcategoryName = findSubcategoryName(categories, form.category_id);
+  const selectedSubcategoryName = findSubcategoryName(categories, form.sub_category_id);
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
@@ -260,8 +265,8 @@ export default function BusinessProfilePage() {
                     <div>
                       <label className="block text-xs sm:text-sm font-medium text-dark-300 mb-1.5">Subcategory</label>
                       <select
-                        value={form.category_id}
-                        onChange={update('category_id')}
+                        value={form.sub_category_id}
+                        onChange={update('sub_category_id')}
                         disabled={!selectedCategoryId}
                         className="w-full bg-dark-800 border border-dark-700 rounded px-3 py-2 text-sm text-white outline-none focus:border-dark-500 transition-colors disabled:opacity-60"
                       >
