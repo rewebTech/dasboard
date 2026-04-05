@@ -7,7 +7,7 @@
  */
 
 const RAW_BASE_URL =
- 'http://localhost:5000/api/v1';
+ 'https://api.sundayhundred.com/api/v1';
 
 export const BASE_URL = /^https?:\/\//i.test(RAW_BASE_URL)
   ? RAW_BASE_URL
