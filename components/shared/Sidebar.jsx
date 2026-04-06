@@ -8,6 +8,7 @@
 
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/helpers';
@@ -59,8 +60,14 @@ export default function Sidebar({ user }) {
     <aside className="w-60 min-w-[240px] h-screen flex flex-col bg-dark-950 border-r border-dark-800 overflow-y-auto overflow-x-hidden">
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 h-14 border-b border-dark-800 flex-shrink-0">
-        <div className="w-8 h-8 bg-accent rounded flex items-center justify-center text-black font-bold text-base flex-shrink-0">
-          <BoltIcon />
+        <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-md border border-white/10 bg-white/5 flex-shrink-0">
+          <Image
+            src="/favicon-96x96.png"
+            alt="Sunday Hundred"
+            width={32}
+            height={32}
+            className="h-full w-full object-contain p-1"
+          />
         </div>
         <span className="text-lg font-bold text-white whitespace-nowrap">Sunday Hundred</span>
       </div>

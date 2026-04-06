@@ -9,6 +9,8 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   requestSignupOtp,
@@ -50,6 +52,7 @@ export default function SignupPage() {
   const [manualHint, setManualHint] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
+  const [acceptedPolicies, setAcceptedPolicies] = useState(false);
 
   const update = (key) => (e) => {
     setForm((p) => ({ ...p, [key]: e.target.value }));
@@ -61,6 +64,11 @@ export default function SignupPage() {
 
   const handleRequestOtp = async () => {
     setError('');
+
+    if (!acceptedPolicies) {
+      setError('Please accept the Terms, Privacy Policy, and Refund Policy before continuing.');
+      return false;
+    }
 
     if (!form.name.trim() || !form.email.trim() || !form.phone.trim() || !form.password) {
       setError('Please fill name, email, phone, password, and plan before requesting OTP.');
@@ -107,6 +115,11 @@ export default function SignupPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!acceptedPolicies) {
+      setError('Please accept the Terms, Privacy Policy, and Refund Policy before continuing.');
+      return;
+    }
 
     if (!otpRequested) {
       await handleRequestOtp();
@@ -314,6 +327,30 @@ export default function SignupPage() {
   }
 
   if (step === 'manual' || step === 'submitting_manual') {
+
+            <label className="flex items-start gap-3 rounded-lg border border-dark-700 bg-dark-900 px-3 py-3 text-sm text-dark-300">
+              <input
+                type="checkbox"
+                checked={acceptedPolicies}
+                onChange={(e) => setAcceptedPolicies(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-dark-600 bg-dark-900 text-accent focus:ring-accent"
+              />
+              <span className="leading-6">
+                I agree to the{' '}
+                <Link href="/terms-and-conditions" target="_blank" className="text-accent hover:underline">
+                  Terms & Conditions
+                </Link>
+                ,{' '}
+                <Link href="/privacy-policy" target="_blank" className="text-accent hover:underline">
+                  Privacy Policy
+                </Link>
+                , and{' '}
+                <Link href="/refund-policy" target="_blank" className="text-accent hover:underline">
+                  Refund Policy
+                </Link>
+                .
+              </span>
+            </label>
     const selectedPlanAmount = PLANS.find((p) => p.key === form.plan)?.priceNum || 1;
     const payAmount = Number(manualInfo?.amount) || selectedPlanAmount;
     const upiId = manualInfo?.qr?.upi_id || FALLBACK_UPI_ID;
@@ -399,10 +436,15 @@ export default function SignupPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center gap-2.5 justify-center mb-8">
-          <div className="w-9 h-9 bg-accent rounded-lg flex items-center justify-center text-black font-bold">
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-            </svg>
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-white/5 shadow-lg shadow-black/20">
+            <Image
+              src="/web-app-manifest-192x192.png"
+              alt="Sunday Hundred"
+              width={40}
+              height={40}
+              className="h-full w-full object-contain p-1"
+              priority
+            />
           </div>
           <span className="text-xl font-bold text-white">Sunday Hundred</span>
         </div>
@@ -525,6 +567,18 @@ export default function SignupPage() {
                 ? 'Verifying...'
                 : 'Verify OTP & Continue'}
             </Button>
+
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-dark-400">
+              <Link href="/terms-and-conditions" className="hover:text-white hover:underline">
+                Terms & Conditions
+              </Link>
+              <Link href="/privacy-policy" className="hover:text-white hover:underline">
+                Privacy Policy
+              </Link>
+              <Link href="/refund-policy" className="hover:text-white hover:underline">
+                Refund Policy
+              </Link>
+            </div>
 
             {otpRequested && (
               <button

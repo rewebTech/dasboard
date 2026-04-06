@@ -8,6 +8,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -29,10 +30,15 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex items-center gap-2.5 justify-center mb-8">
-          <div className="w-9 h-9 bg-accent rounded-lg flex items-center justify-center text-black font-bold">
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-            </svg>
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-white/5 shadow-lg shadow-black/20">
+            <Image
+              src="/web-app-manifest-192x192.png"
+              alt="Sunday Hundred"
+              width={40}
+              height={40}
+              className="h-full w-full object-contain p-1"
+              priority
+            />
           </div>
           <span className="text-xl font-bold text-white">Sunday Hundred</span>
         </div>

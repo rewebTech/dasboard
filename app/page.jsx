@@ -91,7 +91,19 @@ export default function RootPage() {
                 Get Listed Now
               </Link>
               <Link href="https://app.sundayhundred.com" target="_blank" rel="noreferrer" className="rounded border border-dark-600 bg-surface px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-dark-800">
-                View Customer App
+                View Customer Platform
+              </Link>
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-dark-400">
+              <Link href="/terms-and-conditions" className="hover:text-white hover:underline">
+                Terms & Conditions
+              </Link>
+              <Link href="/privacy-policy" className="hover:text-white hover:underline">
+                Privacy Policy
+              </Link>
+              <Link href="/refund-policy" className="hover:text-white hover:underline">
+                Refund Policy
               </Link>
             </div>
 
@@ -103,11 +115,11 @@ export default function RootPage() {
               Early businesses get extra visibility advantage.
             </p>
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+            {/* <div className="mt-8 grid gap-3 sm:grid-cols-3">
               <Metric label="Positioning" value="Marketing + leads" />
               <Metric label="Lead flow" value="WhatsApp first" />
               <Metric label="Starting from" value="₹1999" />
-            </div>
+            </div> */}
           </div>
 
           <div className="rounded-3xl border border-dark-700 bg-surface p-5 shadow-2xl shadow-black/20 backdrop-blur">
@@ -157,7 +169,7 @@ export default function RootPage() {
             <p className="mt-3 text-sm text-dark-400 md:text-base">
               Businesses join because Sunday Hundred helps them show offers, get leads, and stay visible when customers are ready to buy.
             </p>
-            <div className="mt-6 rounded-2xl border border-dark-700 bg-surface p-5">
+            {/* <div className="mt-6 rounded-2xl border border-dark-700 bg-surface p-5">
               <h3 className="text-lg font-semibold">Who this is for</h3>
               <div className="mt-4 grid grid-cols-2 gap-2 text-sm text-dark-300 sm:grid-cols-3">
                 {['Salon', 'Spa', 'Gym', 'Boutique', 'Clinic', 'Freelancers'].map((item) => (
@@ -166,7 +178,7 @@ export default function RootPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </div> */}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -297,7 +309,7 @@ export default function RootPage() {
                 Get listed now
               </Link>
               <Link href="https://app.sundayhundred.com" target="_blank" rel="noreferrer" className="rounded border border-dark-600 bg-surface px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-dark-800">
-                View Customer App
+                View Customer Platform
               </Link>
             </div>
           </div>
