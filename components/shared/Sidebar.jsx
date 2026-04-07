@@ -62,7 +62,7 @@ export default function Sidebar({ user }) {
       <div className="flex items-center gap-2.5 px-5 h-14 border-b border-dark-800 flex-shrink-0">
         <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-md border border-white/10 bg-white/5 flex-shrink-0">
           <Image
-            src="/favicon-96x96.png"
+            src="/favicon-32x32.png"
             alt="Sunday Hundred"
             width={32}
             height={32}
