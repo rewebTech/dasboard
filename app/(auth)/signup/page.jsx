@@ -438,7 +438,7 @@ export default function SignupPage() {
         <div className="flex items-center gap-2.5 justify-center mb-8">
           <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-white/5 shadow-lg shadow-black/20">
             <Image
-              src="/web-app-manifest-192x192.png"
+              src="/android-chrome-192x192.png"
               alt="Sunday Hundred"
               width={40}
               height={40}
